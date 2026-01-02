@@ -1,0 +1,171 @@
+#!/usr/bin/env python
+"""Post-generation hook for removing optional files based on user selections."""
+
+import os
+import shutil
+
+# Get the current working directory (the generated project)
+PROJECT_DIR = os.getcwd()
+
+
+def remove_file(filepath):
+    """Remove a file if it exists."""
+    full_path = os.path.join(PROJECT_DIR, filepath)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+        # print(f"  Removed: {filepath}")
+
+
+def remove_dir(dirpath):
+    """Remove a directory and its contents if it exists."""
+    full_path = os.path.join(PROJECT_DIR, dirpath)
+    if os.path.isdir(full_path):
+        shutil.rmtree(full_path)
+        # print(f"  Removed: {dirpath}/")
+
+
+def remove_files_by_pattern(directory, pattern):
+    """Remove files matching a pattern in a directory."""
+    import fnmatch
+
+    dir_path = os.path.join(PROJECT_DIR, directory)
+    if not os.path.isdir(dir_path):
+        return
+    for filename in os.listdir(dir_path):
+        if fnmatch.fnmatch(filename, pattern):
+            filepath = os.path.join(directory, filename)
+            remove_file(filepath)
+
+
+# Feature flags from cookiecutter
+include_latex = {{ cookiecutter.include_latex_reports }}
+include_notebooks = {{ cookiecutter.include_jupyter_notebooks }}
+include_r = {{ cookiecutter.include_r_scripts }}
+include_stata = {{ cookiecutter.include_stata_scripts }}
+include_chartbook = {{ cookiecutter.include_chartbook }}
+include_github_actions = {{ cookiecutter.include_github_actions }}
+
+# Data source flags
+include_fred = {{ cookiecutter.include_fred }}
+include_fed_yield_curve = {{ cookiecutter.include_fed_yield_curve }}
+include_ofr = {{ cookiecutter.include_ofr_api }}
+include_bloomberg = {{ cookiecutter.include_bloomberg }}
+include_crsp_stock = {{ cookiecutter.include_crsp_stock }}
+include_crsp_compustat = {{ cookiecutter.include_crsp_compustat }}
+
+# Environment manager
+environment_manager = "{{ cookiecutter.environment_manager }}"
+
+print("Configuring project based on selections...")
+
+# Remove environment files based on environment manager choice
+if environment_manager == "pip":
+    remove_file("environment.yml")
+    remove_file("pixi.toml")
+    remove_file("pyproject.toml")
+    # Keep requirements.txt
+elif environment_manager == "uv":
+    remove_file("environment.yml")
+    remove_file("pixi.toml")
+    remove_file("requirements.txt")
+    # Keep pyproject.toml
+elif environment_manager == "conda":
+    remove_file("pixi.toml")
+    remove_file("pyproject.toml")
+    # Keep environment.yml and requirements.txt
+elif environment_manager == "pixi":
+    remove_file("environment.yml")
+    remove_file("pyproject.toml")
+    # Keep pixi.toml and requirements.txt
+
+# Remove LaTeX-related files if not selected
+if not include_latex:
+    # print("Removing LaTeX files...")
+    remove_dir("reports")
+    remove_file(".latexmkrc")
+    remove_file("src/example_table.py")
+    remove_file("src/pandas_to_latex_demo.py")
+
+# Remove notebook files if not selected
+if not include_notebooks:
+    # print("Removing Jupyter notebook files...")
+    remove_files_by_pattern("src", "*_ipynb.py")
+else:
+    # Handle notebook dependencies
+    # Notebook 02 requires FRED
+    if not include_fred:
+        remove_file("src/02_example_with_dependencies_ipynb.py")
+    # Notebook 03 requires FRED + OFR
+    if not (include_fred and include_ofr):
+        remove_file("src/03_public_repo_summary_charts_ipynb.py")
+
+# Remove R-related files if not selected
+if not include_r:
+    # print("Removing R files...")
+    remove_files_by_pattern("src", "*.r")
+    remove_files_by_pattern("src", "*.R")
+    remove_files_by_pattern("src", "*.Rmd")
+    remove_file("r_requirements.txt")
+
+# Remove Stata-related files if not selected
+if not include_stata:
+    # print("Removing Stata files...")
+    remove_files_by_pattern("src", "*.do")
+
+# Remove Chartbook-related files if not selected
+if not include_chartbook:
+    # print("Removing Chartbook files...")
+    remove_file("chartbook.toml")
+    remove_dir("docs_src")
+
+# Remove GitHub Actions if not selected
+if not include_github_actions:
+    # print("Removing GitHub Actions...")
+    remove_dir(".github")
+
+# Remove data pull scripts based on selection
+# print("Configuring data pull scripts...")
+
+if not include_fred:
+    remove_file("src/pull_fred.py")
+    remove_file("src/test_pull_fred.py")
+
+if not include_fed_yield_curve:
+    remove_file("src/load_fed_yield_curve.py")
+
+if not include_ofr:
+    remove_file("src/pull_ofr_api_data.py")
+
+# pull_public_repo_data.py and chart_relative_repo_rates.py require both FRED and OFR
+if not (include_fred and include_ofr):
+    remove_file("src/pull_public_repo_data.py")
+    remove_file("src/chart_relative_repo_rates.py")
+
+if not include_bloomberg:
+    remove_file("src/pull_bloomberg.py")
+
+if not include_crsp_stock:
+    remove_file("src/pull_CRSP_stock.py")
+
+if not include_crsp_compustat:
+    remove_file("src/pull_CRSP_Compustat.py")
+
+print("Project configuration complete!")
+print("\nNext steps:")
+print("  cd {{ cookiecutter.project_slug }}")
+
+if environment_manager == "pip":
+    print("  python -m venv .venv")
+    print("  source .venv/bin/activate  # Windows: .venv\\Scripts\\activate")
+    print("  pip install -r requirements.txt")
+elif environment_manager == "uv":
+    print("  uv sync")
+elif environment_manager == "conda":
+    print(
+        "  conda env create -f environment.yml"
+    )
+    print("  conda activate {{ cookiecutter.project_slug }}")
+elif environment_manager == "pixi":
+    print("  pixi install")
+
+print("  doit")

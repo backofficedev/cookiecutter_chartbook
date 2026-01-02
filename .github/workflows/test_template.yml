@@ -1,0 +1,67 @@
+name: Test Cookiecutter Template
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cookiecutter pytest doit colorama python-decouple
+
+      - name: Run template tests
+        run: |
+          pytest tests/ -v
+
+      - name: Test minimal project generation
+        run: |
+          cookiecutter . --no-input -o /tmp/ \
+            project_name="Test Minimal" \
+            include_latex_reports=n \
+            include_jupyter_notebooks=n \
+            include_r_scripts=n \
+            include_stata_scripts=n \
+            include_chartbook=n \
+            include_github_actions=n \
+            include_fred=n \
+            include_ofr_api=n \
+            include_bloomberg=n \
+            include_crsp_stock=n \
+            include_crsp_compustat=n
+          cd /tmp/test_minimal
+          doit list
+
+      - name: Test full project generation
+        run: |
+          cookiecutter . --no-input -o /tmp/ \
+            project_name="Test Full" \
+            include_latex_reports=y \
+            include_jupyter_notebooks=y \
+            include_r_scripts=y \
+            include_stata_scripts=y \
+            include_chartbook=y \
+            include_github_actions=y \
+            include_fred=y \
+            include_ofr_api=y \
+            include_bloomberg=y \
+            include_crsp_stock=y \
+            include_crsp_compustat=y
+          cd /tmp/test_full
+          doit list
