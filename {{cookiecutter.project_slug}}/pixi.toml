@@ -45,24 +45,6 @@ jupyterlab = "*"
 jupytext = "*"
 notebook = "*"
 {% endif %}
-{% if cookiecutter.include_chartbook or cookiecutter.include_jupyter_notebooks %}
-# Documentation/notebook rendering dependencies
-ablog = "0.11.11"
-jupyter-book = "*"
-linkify-it-py = "*"
-myst-nb = "*"
-myst-parser = "2.0.0"
-numpydoc = "1.8.0"
-pydata-sphinx-theme = "0.15.4"
-sphinx-autodoc2 = "*"
-sphinx-book-theme = "1.1.3"
-sphinx-design = "*"
-sphinx = "7.3.7"
-sphinxext-opengraph = "*"
-sphinxcontrib-applehelp = "2.0.0"
-sphinxcontrib-htmlhelp = "2.1.0"
-sphinxext-rediraffe = "*"
-{% endif %}
 {% if cookiecutter.include_bloomberg %}
 # Bloomberg data access
 xbbg = "0.7.7"
@@ -83,6 +65,9 @@ r-stargazer = "*"
 {% endif %}
 
 [pypi-dependencies]
+{% if cookiecutter.include_chartbook or cookiecutter.include_jupyter_notebooks %}
+chartbook = { version = "*", extras = ["all"] }
+{% endif %}
 {% if cookiecutter.include_crsp_stock or cookiecutter.include_crsp_compustat %}
 wrds = ">=3.2.0"
 {% endif %}

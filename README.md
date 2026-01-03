@@ -134,6 +134,13 @@ cookiecutter . --no-input -o ./tmp/
 cookiecutter . --no-input -o ./tmp/ --overwrite-if-exists
 ```
 
+### Code Formatting
+
+```bash
+# Format code, sort imports, and fix linting issues
+ruff format . && ruff check --select I --fix . && ruff check --fix .
+```
+
 ### Running Template Tests
 
 ```bash

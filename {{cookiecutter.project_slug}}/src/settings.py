@@ -42,10 +42,10 @@ and compare to
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 from platform import system
 
-import pandas as pd
 from decouple import config as _config
 
 
@@ -148,8 +148,8 @@ else:
     defaults["STATA_EXE"] = get_stata_exe()
 
 ## Dates
-defaults["START_DATE"] = pd.to_datetime("1913-01-01")
-defaults["END_DATE"] = pd.to_datetime("2024-12-31")
+defaults["START_DATE"] = datetime.strptime("1913-01-01", "%Y-%m-%d")
+defaults["END_DATE"] = datetime.strptime("2024-12-31", "%Y-%m-%d")
 
 
 ## File paths
