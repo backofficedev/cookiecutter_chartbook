@@ -1,6 +1,8 @@
-# Economics Project Template (Cookiecutter)
+# Economics/Finance Project Template
 
-A [Cookiecutter](https://github.com/cookiecutter/cookiecutter) template for creating reproducible data science projects with optional features for LaTeX reports, Jupyter notebooks, R scripts, Stata scripts, and various data sources.
+A [Cookiecutter](https://github.com/cookiecutter/cookiecutter)-compatible template for creating reproducible data science projects with optional features for LaTeX reports, Jupyter notebooks, R scripts, Stata scripts, and various data sources.
+
+We recommend using [cruft](https://cruft.github.io/cruft/) instead of cookiecutter to generate projects from this template. Cruft is fully compatible with cookiecutter templates but adds the ability to keep your project synchronized with template updates over time.
 
 ## Features
 
@@ -30,9 +32,9 @@ This template allows you to generate a customized data science project with:
 
 ### Prerequisites
 
-1. Install [Cookiecutter](https://cookiecutter.readthedocs.io/en/stable/installation.html):
+1. Install [cruft](https://cruft.github.io/cruft/):
    ```bash
-   pip install cookiecutter
+   pip install cruft
    ```
 
 2. (Optional) Install [miniforge](https://github.com/conda-forge/miniforge) for conda environment management.
@@ -40,8 +42,10 @@ This template allows you to generate a customized data science project with:
 ### Generate a New Project
 
 ```bash
-cookiecutter https://github.com/backofficedev/cookiecutter_chartbook
+cruft create https://github.com/backofficedev/cookiecutter_chartbook
 ```
+
+This creates your project and a `.cruft.json` file that tracks the template version, enabling future updates.
 
 You will be prompted for:
 - Project name and description
@@ -50,14 +54,31 @@ You will be prompted for:
 - Which optional features to include
 - Which data sources to include
 
+### Updating Your Project
+
+One of the key benefits of using cruft is the ability to update your project when the template changes:
+
+```bash
+# Check if your project is up-to-date with the template
+cruft check
+
+# View differences between your project and the latest template
+cruft diff
+
+# Update your project to the latest template version
+cruft update
+```
+
+You can also add `cruft check` to your CI pipeline to ensure projects stay synchronized.
+
 ### Example Usage
 
 ```bash
 # Generate with all defaults (interactive prompts)
-cookiecutter https://github.com/backofficedev/cookiecutter_chartbook
+cruft create https://github.com/backofficedev/cookiecutter_chartbook
 
 # Generate with custom options
-cookiecutter https://github.com/backofficedev/cookiecutter_chartbook \
+cruft create https://github.com/backofficedev/cookiecutter_chartbook \
   --no-input \
   -f \
   project_name="My Analysis" \
@@ -125,13 +146,20 @@ git clone https://github.com/backofficedev/cookiecutter_chartbook
 cd cookiecutter_chartbook
 
 # Generate a project from the local template to a specific output directory
-cookiecutter . -o ./tmp/
+cruft create . -o ./tmp/
 
 # Or with no prompts (use defaults)
-cookiecutter . --no-input -o ./tmp/
+cruft create . --no-input -o ./tmp/
 
 # Overwrite existing project with same name
-cookiecutter . --no-input -o ./tmp/ --overwrite-if-exists
+cruft create . --no-input -o ./tmp/ --overwrite-if-exists
+```
+
+If you have an existing project that was created with cookiecutter, you can link it to the template:
+
+```bash
+cd my_existing_project
+cruft link https://github.com/backofficedev/cookiecutter_chartbook
 ```
 
 ### Code Formatting
@@ -145,7 +173,7 @@ ruff format . && ruff check --select I --fix . && ruff check --fix .
 
 ```bash
 # Install test dependencies
-pip install pytest cookiecutter
+pip install pytest cruft
 
 # Run tests
 pytest tests/ -v
@@ -155,7 +183,7 @@ pytest tests/ -v
 
 ```bash
 # Test minimal project (all features disabled)
-cookiecutter . --no-input -o ./tmp/ \
+cruft create . --no-input -o ./tmp/ \
   project_name="Minimal Test" \
   include_latex_reports=n \
   include_jupyter_notebooks=n \
@@ -170,7 +198,7 @@ cookiecutter . --no-input -o ./tmp/ \
   include_crsp_compustat=n
 
 # Test full project (all features enabled)
-cookiecutter . --no-input -o ./tmp/ \
+cruft create . --no-input -o ./tmp/ \
   project_name="Full Test" \
   include_latex_reports=y \
   include_jupyter_notebooks=y \

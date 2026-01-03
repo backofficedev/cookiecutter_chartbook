@@ -1,4 +1,4 @@
-"""Tests for the cookiecutter template.
+"""Tests for the cruft/cookiecutter template.
 
 These tests verify that the template generates valid projects with
 different combinations of options.
@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from cookiecutter.main import cookiecutter
+from cruft import create as cruft_create
 
 
 # Base context with all features disabled (uses pip by default)
@@ -55,8 +55,8 @@ FULL_CONTEXT = {
 
 
 def generate_project(template_dir, output_dir, context):
-    """Generate a project from the template."""
-    return cookiecutter(
+    """Generate a project from the template using cruft."""
+    return cruft_create(
         str(template_dir),
         output_dir=str(output_dir),
         no_input=True,

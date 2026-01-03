@@ -63,7 +63,7 @@ how_is_pulled = "Web API via Python"
 path_to_parquet_data = "./_data/repo_public.parquet"
 path_to_excel_data = "./_data/repo_public.xlsx"
 date_col = "date"
-path_to_dataframe_doc = "./docs_src/dataframes/repo_public.md"
+dataframe_docs_path = "./docs_src/dataframes/repo_public.md"
 {% endif %}
 
 [charts]

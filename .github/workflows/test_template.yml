@@ -1,4 +1,4 @@
-name: Test Cookiecutter Template
+name: Test Template
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install cookiecutter pytest doit colorama python-decouple
+          pip install cruft pytest doit colorama python-decouple
 
       - name: Run template tests
         run: |
@@ -32,7 +32,7 @@ jobs:
 
       - name: Test minimal project generation
         run: |
-          cookiecutter . --no-input -o /tmp/ \
+          cruft create . --no-input -o /tmp/ \
             project_name="Test Minimal" \
             include_latex_reports=n \
             include_jupyter_notebooks=n \
@@ -50,7 +50,7 @@ jobs:
 
       - name: Test full project generation
         run: |
-          cookiecutter . --no-input -o /tmp/ \
+          cruft create . --no-input -o /tmp/ \
             project_name="Test Full" \
             include_latex_reports=y \
             include_jupyter_notebooks=y \
