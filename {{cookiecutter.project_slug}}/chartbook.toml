@@ -85,5 +85,5 @@ data_series = ""
 mnemonic = ""
 path_to_html_chart = "./_output/repo_rates.html"
 path_to_excel_chart = "./src/repo_rates.xlsx"
-path_to_chart_doc = "./docs_src/charts/repo_rates.md"
+chart_docs_path = "./docs_src/charts/repo_rates.md"
 {% endif %}

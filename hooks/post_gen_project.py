@@ -37,21 +37,28 @@ def remove_files_by_pattern(directory, pattern):
             remove_file(filepath)
 
 
+def is_truthy(value):
+    """Convert y/n/yes/no/true/false string to boolean."""
+    if isinstance(value, bool):
+        return value
+    return str(value).lower() in ("y", "yes", "true", "1")
+
+
 # Feature flags from cookiecutter
-include_latex = {{ cookiecutter.include_latex_reports }}
-include_notebooks = {{ cookiecutter.include_jupyter_notebooks }}
-include_r = {{ cookiecutter.include_r_scripts }}
-include_stata = {{ cookiecutter.include_stata_scripts }}
-include_chartbook = {{ cookiecutter.include_chartbook }}
-include_github_actions = {{ cookiecutter.include_github_actions }}
+include_latex = is_truthy("{{ cookiecutter.include_latex_reports }}")
+include_notebooks = is_truthy("{{ cookiecutter.include_jupyter_notebooks }}")
+include_r = is_truthy("{{ cookiecutter.include_r_scripts }}")
+include_stata = is_truthy("{{ cookiecutter.include_stata_scripts }}")
+include_chartbook = is_truthy("{{ cookiecutter.include_chartbook }}")
+include_github_actions = is_truthy("{{ cookiecutter.include_github_actions }}")
 
 # Data source flags
-include_fred = {{ cookiecutter.include_fred }}
-include_fed_yield_curve = {{ cookiecutter.include_fed_yield_curve }}
-include_ofr = {{ cookiecutter.include_ofr_api }}
-include_bloomberg = {{ cookiecutter.include_bloomberg }}
-include_crsp_stock = {{ cookiecutter.include_crsp_stock }}
-include_crsp_compustat = {{ cookiecutter.include_crsp_compustat }}
+include_fred = is_truthy("{{ cookiecutter.include_fred }}")
+include_fed_yield_curve = is_truthy("{{ cookiecutter.include_fed_yield_curve }}")
+include_ofr = is_truthy("{{ cookiecutter.include_ofr_api }}")
+include_bloomberg = is_truthy("{{ cookiecutter.include_bloomberg }}")
+include_crsp_stock = is_truthy("{{ cookiecutter.include_crsp_stock }}")
+include_crsp_compustat = is_truthy("{{ cookiecutter.include_crsp_compustat }}")
 
 # Environment manager
 environment_manager = "{{ cookiecutter.environment_manager }}"
