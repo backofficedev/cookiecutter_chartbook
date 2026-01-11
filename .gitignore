@@ -36,7 +36,6 @@ htmlcov/
 .vscode/
 .idea/
 *.sublime*
-.cursor/
 
 # OS
 .DS_Store
