@@ -181,7 +181,7 @@ Notebooks are integrated into the PyDoit build system via `dodo.py`. Here's how 
    - Converts `.py` file to `.ipynb` using `jupytext --to notebook`
    - Executes the notebook using `jupyter nbconvert --execute`
    - Converts to HTML for viewing
-   - Moves the executed `.ipynb` to `OUTPUT_DIR/_notebook_build/`
+   - Moves the executed `.ipynb` to `OUTPUT_DIR/`
    - Places the HTML version in `OUTPUT_DIR/`
 
 3. **Dependencies**:
