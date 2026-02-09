@@ -3,48 +3,48 @@ type = "pipeline"
 chartbook_format_version = "0.0.2"
 
 [site]
-title = "{{ cookiecutter.project_name }}"
-author = "{{ cookiecutter.author_name }}"
+title = "Example"
+author = "Author Name"
 copyright = "2025"
 logo_path = ""
 favicon_path = ""
 
 [pipeline]
-id = "{{ cookiecutter.project_slug[:2].upper() }}"
-pipeline_name = "{{ cookiecutter.project_name }}"
-pipeline_description = "{{ cookiecutter.project_description }}"
-lead_pipeline_developer = "{{ cookiecutter.author_name }}"
-contributors = ["{{ cookiecutter.author_name }}"]
+id = "EX"
+pipeline_name = "Example"
+pipeline_description = "Example project generated from cookiecutter-chartbook"
+lead_pipeline_developer = "Author Name"
+contributors = ["Author Name"]
 software_modules_command = "module load anaconda3/3.11.4 TeXLive/2023"
 runs_on_grid_or_windows_or_other = "Windows/Linux/MacOS"
 git_repo_URL = ""
 README_file_path = "./README.md"
 
 [notebooks]
-{% if cookiecutter.include_jupyter_notebooks %}
+
 
 [notebooks.01_example_notebook_interactive]
 notebook_name = "Example Notebook Interactive"
 notebook_description = "Example notebook for demonstrating how to construct a Chartbook notebook."
 notebook_path = "_output/01_example_notebook_interactive_ipynb.ipynb"
-{% if cookiecutter.include_fred %}
+
 
 [notebooks.02_example_with_dependencies]
 notebook_name = "Example Notebook with Dependencies"
 notebook_description = "Example notebook demonstrating dependencies on data pulls."
 notebook_path = "_output/02_example_with_dependencies_ipynb.ipynb"
-{% endif %}
-{% if cookiecutter.include_fred and cookiecutter.include_ofr_api %}
+
+
 
 [notebooks.03_public_repo_summary_charts]
 notebook_name = "Public Repo Summary Charts"
 notebook_description = "Summary charts using public repo data."
 notebook_path = "_output/03_public_repo_summary_charts_ipynb.ipynb"
-{% endif %}
-{% endif %}
+
+
 
 [dataframes]
-{% if cookiecutter.include_fred and cookiecutter.include_ofr_api %}
+
 
 [dataframes.repo_public]
 dataframe_name = "Public Repo Data"
@@ -64,10 +64,10 @@ path_to_parquet_data = "./_data/repo_public.parquet"
 path_to_excel_data = "./_data/repo_public.xlsx"
 date_col = "date"
 dataframe_docs_path = "./docs_src/dataframes/repo_public.md"
-{% endif %}
+
 
 [charts]
-{% if cookiecutter.include_fred and cookiecutter.include_ofr_api %}
+
 
 [charts.repo_rates]
 chart_name = "Repo Rates"
@@ -86,4 +86,4 @@ mnemonic = ""
 path_to_html_chart = "./_output/repo_rates.html"
 path_to_excel_chart = "./src/repo_rates.xlsx"
 chart_docs_path = "./docs_src/charts/repo_rates.md"
-{% endif %}
+

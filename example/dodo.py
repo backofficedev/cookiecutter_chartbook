@@ -26,7 +26,6 @@ MANUAL_DATA_DIR = config("MANUAL_DATA_DIR")
 OUTPUT_DIR = config("OUTPUT_DIR")
 OS_TYPE = config("OS_TYPE")
 USER = config("USER")
-{%- if cookiecutter.include_jupyter_notebooks %}
 
 ## Helpers for handling Jupyter Notebook tasks
 environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
@@ -56,7 +55,6 @@ def mv(from_path, to_path):
     else:
         command = f"move {from_path} {to_path}"
     return command
-{%- endif %}
 
 
 def copy_file(origin_path, destination_path, mkdir=True):
@@ -86,12 +84,9 @@ def task_config():
         "clean": [],
     }
 
-{%- if cookiecutter.include_fred or cookiecutter.include_ofr_api or cookiecutter.include_bloomberg or cookiecutter.include_crsp_stock or cookiecutter.include_crsp_compustat %}
-
 
 def task_pull():
     """Pull data from external sources"""
-{%- if cookiecutter.include_fred %}
     yield {
         "name": "fred",
         "doc": "Pull data from FRED",
@@ -103,8 +98,6 @@ def task_pull():
         "file_dep": ["./src/settings.py", "./src/pull_fred.py"],
         "clean": [],
     }
-{%- endif %}
-{%- if cookiecutter.include_ofr_api %}
     yield {
         "name": "ofr",
         "doc": "Pull data from OFR API",
@@ -116,34 +109,6 @@ def task_pull():
         "file_dep": ["./src/settings.py", "./src/pull_ofr_api_data.py"],
         "clean": [],
     }
-{%- endif %}
-{%- if cookiecutter.include_bloomberg %}
-    yield {
-        "name": "bloomberg",
-        "doc": "Pull data from Bloomberg",
-        "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_bloomberg.py",
-        ],
-        "targets": [DATA_DIR / "bloomberg.parquet"],
-        "file_dep": ["./src/settings.py", "./src/pull_bloomberg.py"],
-        "clean": [],
-    }
-{%- endif %}
-{%- if cookiecutter.include_crsp_stock %}
-    yield {
-        "name": "crsp_stock",
-        "doc": "Pull CRSP stock data from WRDS",
-        "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_CRSP_stock.py",
-        ],
-        "targets": [DATA_DIR / "CRSP_monthly_stock.parquet"],
-        "file_dep": ["./src/settings.py", "./src/pull_CRSP_stock.py"],
-        "clean": [],
-    }
-{%- endif %}
-{%- if cookiecutter.include_crsp_compustat %}
     yield {
         "name": "crsp_compustat",
         "doc": "Pull CRSP Compustat data from WRDS",
@@ -155,9 +120,6 @@ def task_pull():
         "file_dep": ["./src/settings.py", "./src/pull_CRSP_compustat.py"],
         "clean": [],
     }
-{%- endif %}
-{%- endif %}
-{%- if cookiecutter.include_latex_reports %}
 
 
 def task_summary_stats():
@@ -178,8 +140,6 @@ def task_summary_stats():
         "file_dep": file_dep,
         "clean": True,
     }
-{%- endif %}
-{%- if cookiecutter.include_fred %}
 
 
 def task_example_plot():
@@ -196,8 +156,6 @@ def task_example_plot():
         "file_dep": file_dep,
         "clean": True,
     }
-{%- endif %}
-{%- if cookiecutter.include_fred and cookiecutter.include_ofr_api %}
 
 
 def task_chart_repo_rates():
@@ -224,8 +182,6 @@ def task_chart_repo_rates():
         "file_dep": file_dep,
         "clean": True,
     }
-{%- endif %}
-{%- if cookiecutter.include_jupyter_notebooks %}
 
 
 notebook_tasks = {
@@ -234,14 +190,11 @@ notebook_tasks = {
         "file_dep": [],
         "targets": [],
     },
-{%- if cookiecutter.include_fred %}
     "02_example_with_dependencies_ipynb": {
         "path": "./src/02_example_with_dependencies_ipynb.py",
         "file_dep": ["./src/pull_fred.py"],
         "targets": [OUTPUT_DIR / "GDP_graph.png"],
     },
-{%- endif %}
-{%- if cookiecutter.include_fred and cookiecutter.include_ofr_api %}
     "03_public_repo_summary_charts_ipynb": {
         "path": "./src/03_public_repo_summary_charts_ipynb.py",
         "file_dep": [
@@ -254,7 +207,6 @@ notebook_tasks = {
             OUTPUT_DIR / "rates_relative_to_midpoint.png",
         ],
     },
-{%- endif %}
 }
 
 
@@ -287,8 +239,6 @@ def task_run_notebooks():
             "clean": True,
         }
 # fmt: on
-{%- endif %}
-{%- if cookiecutter.include_latex_reports %}
 
 ###############################################################
 ## Task below is for LaTeX compilation
@@ -332,8 +282,6 @@ def task_compile_latex_docs():
         "file_dep": file_dep,
         "clean": True,
     }
-{%- endif %}
-{%- if cookiecutter.include_chartbook and cookiecutter.include_jupyter_notebooks %}
 
 sphinx_targets = [
     "./docs/index.html",
@@ -363,141 +311,3 @@ def task_build_chartbook_site():
         ],
         "clean": True,
     }
-{%- endif %}
-{%- if cookiecutter.include_r_scripts %}
-
-##############################################################
-# R Tasks - Uncomment if you have R installed
-##############################################################
-
-
-def task_install_r_packages():
-    """Install R packages"""
-    file_dep = [
-        "r_requirements.txt",
-        "./src/install_packages.R",
-    ]
-    targets = [OUTPUT_DIR / "R_packages_installed.txt"]
-
-    return {
-        "actions": [
-            "Rscript ./src/install_packages.R",
-        ],
-        "targets": targets,
-        "file_dep": file_dep,
-        "clean": True,
-    }
-
-
-def task_example_r_script():
-    """Example R plots"""
-    file_dep = [
-{%- if cookiecutter.include_fred %}
-        "./src/pull_fred.py",
-{%- endif %}
-        "./src/example_r_plot.R"
-    ]
-    targets = [
-        OUTPUT_DIR / "example_r_plot.png",
-    ]
-
-    return {
-        "actions": [
-            "Rscript ./src/example_r_plot.R",
-        ],
-        "targets": targets,
-        "file_dep": file_dep,
-{%- if cookiecutter.include_fred %}
-        "task_dep": ["pull_fred"],
-{%- endif %}
-        "clean": True,
-    }
-
-
-rmarkdown_tasks = {
-    "04_example_regressions.Rmd": {
-{%- if cookiecutter.include_fred %}
-        "file_dep": ["./src/pull_fred.py"],
-{%- else %}
-        "file_dep": [],
-{%- endif %}
-        "targets": [],
-    },
-}
-
-
-def task_knit_RMarkdown_files():
-    """Preps the RMarkdown files for presentation format.
-    This will knit the RMarkdown files for easier sharing of results.
-    """
-    str_output_dir = str(OUTPUT_DIR).replace("\\", "/")
-    def knit_string(file):
-        return (
-            "Rscript -e "
-            '"library(rmarkdown); '
-            f"rmarkdown::render('./src/{file}.Rmd', "
-            "output_format='html_document', "
-            f"output_dir='{str_output_dir}')\""
-        )
-
-    for notebook in rmarkdown_tasks.keys():
-        notebook_name = notebook.split(".")[0]
-        file_dep = [f"./src/{notebook}", *rmarkdown_tasks[notebook]["file_dep"]]
-        html_file = f"{notebook_name}.html"
-        targets = [f"{OUTPUT_DIR / html_file}", *rmarkdown_tasks[notebook]["targets"]]
-        actions = [
-            knit_string(notebook_name)
-        ]
-
-        yield {
-            "name": notebook,
-            "actions": actions,
-            "file_dep": file_dep,
-            "targets": targets,
-            "clean": True,
-        }
-{%- endif %}
-{%- if cookiecutter.include_stata_scripts %}
-
-###############################################################
-## Stata Tasks - Uncomment if you have Stata installed
-###############################################################
-
-if OS_TYPE == "windows":
-    STATA_COMMAND = f"{config('STATA_EXE')} /e"
-elif OS_TYPE == "nix":
-    STATA_COMMAND = f"{config('STATA_EXE')} -b"
-else:
-    raise ValueError(f"OS_TYPE {OS_TYPE} is unknown")
-
-def task_example_stata_script():
-    """Example Stata plots
-
-    Make sure to run
-    ```
-    net install doenv, from(https://github.com/vikjam/doenv/raw/master/) replace
-    ```
-    first to install the doenv package: https://github.com/vikjam/doenv.
-    """
-    file_dep = [
-{%- if cookiecutter.include_fred %}
-        "./src/pull_fred.py",
-{%- endif %}
-        "./src/example_stata_plot.do",
-    ]
-    targets = [
-        OUTPUT_DIR / "example_stata_plot.png",
-    ]
-    return {
-        "actions": [
-            f"{STATA_COMMAND} do ./src/example_stata_plot.do",
-        ],
-        "targets": targets,
-        "file_dep": file_dep,
-{%- if cookiecutter.include_fred %}
-        "task_dep": ["pull_fred"],
-{%- endif %}
-        "clean": True,
-        "verbosity": 2,
-    }
-{%- endif %}

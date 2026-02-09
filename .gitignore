@@ -54,3 +54,5 @@ ENV/
 # Doit
 .doit-db.sqlite
 .doit.db.*
+
+_output/
