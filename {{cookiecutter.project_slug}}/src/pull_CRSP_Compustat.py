@@ -162,8 +162,7 @@ def pull_CRSP_stock_ciz(wrds_username=WRDS_USERNAME):
             issuertype, securitytype, securitysubtype, sharetype, 
             usincflg, 
             primaryexch, conditionaltype, tradingstatusflg,
-            mthret, mthretx, shrout, mthprc,
-            cfacshr, cfacpr
+            mthret, mthretx, shrout, mthprc
         FROM 
             crsp.msf_v2
         WHERE 
