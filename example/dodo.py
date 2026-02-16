@@ -300,3 +300,28 @@ def task_build_chartbook_site():
         ],
         "clean": True,
     }
+
+
+def task_run_pytest():
+    """Run pytest and save results to OUTPUT_DIR"""
+    src_py_files = list(Path("./src").glob("*.py"))
+    test_output = OUTPUT_DIR / "pytest_results.xml"
+
+    def run_pytest():
+        import subprocess
+
+        result = subprocess.run(
+            ["pytest", f"--junitxml={test_output}"],
+        )
+        if result.returncode != 0:
+            # Remove the XML so doit won't consider the target up-to-date
+            Path(test_output).unlink(missing_ok=True)
+            raise RuntimeError(f"pytest failed with exit code {result.returncode}")
+
+    return {
+        "actions": [run_pytest],
+        "targets": [test_output],
+        "file_dep": src_py_files,
+        "clean": True,
+        "verbosity": 2,
+    }

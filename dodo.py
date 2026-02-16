@@ -10,6 +10,14 @@ from dotenv import dotenv_values
 OUTPUT_DIR = Path("_output")
 EXAMPLE_DIR = Path("example")
 TEMPLATE_DIR = Path("{{cookiecutter.project_slug}}")
+HOOKS_DIR = Path("hooks")
+
+# Collect template inputs: template files, cookiecutter.json, and hooks
+_template_sources = (
+    [str(p) for p in TEMPLATE_DIR.rglob("*") if p.is_file()]
+    + ["cookiecutter.json"]
+    + [str(p) for p in HOOKS_DIR.glob("*.py")]
+)
 
 
 def task_test():
@@ -20,7 +28,7 @@ def task_test():
             (OUTPUT_DIR.mkdir, [], {"parents": True, "exist_ok": True}),
             f"python -m pytest tests/ --junitxml={report_path} -v",
         ],
-        "file_dep": [str(p) for p in TEMPLATE_DIR.rglob("*") if p.is_file()],
+        "file_dep": _template_sources,
         "targets": [str(report_path)],
         "verbosity": 2,
     }
@@ -28,6 +36,7 @@ def task_test():
 
 def task_example():
     """Generate a full example project in ./example/ using cookiecutter."""
+    stamp = OUTPUT_DIR / "example.stamp"
 
     def generate_example():
         config = {
@@ -50,7 +59,7 @@ def task_example():
                 "include_ofr_api": True,
                 "include_bloomberg": False,
                 "include_crsp_stock": False,
-                "include_crsp_compustat": True,
+                "include_crsp_compustat": False,
             }
         }
 
@@ -89,36 +98,52 @@ def task_example():
         for cache_dir in EXAMPLE_DIR.rglob(".ruff_cache"):
             shutil.rmtree(cache_dir)
 
+        # Write stamp so doit knows the example is up to date
+        stamp.write_text("generated")
+
     return {
         "actions": [generate_example],
+        "file_dep": _template_sources,
+        "targets": [str(stamp)],
+        "clean": [(shutil.rmtree, [str(EXAMPLE_DIR)], {"ignore_errors": True})],
         "verbosity": 2,
-        "uptodate": [False],
     }
 
 
-# def task_run_example():
-#     """Run doit inside the generated example project."""
+def task_run_example():
+    """Run doit inside the generated example project."""
+    stamp = OUTPUT_DIR / "run_example.stamp"
 
-#     def run_example_doit():
-#         import os
+    def run_example_doit():
+        import os
 
-#         env = os.environ.copy()
-#         env.update(dotenv_values(".env"))
-#         result = subprocess.run(
-#             ["doit", "-f", str(EXAMPLE_DIR / "dodo.py")],
-#             capture_output=True,
-#             text=True,
-#             env=env,
-#         )
-#         print(result.stdout)
-#         if result.stderr:
-#             print(result.stderr)
-#         if result.returncode != 0:
-#             raise RuntimeError(f"doit in example/ failed (exit {result.returncode})")
+        env = os.environ.copy()
+        env.update(dotenv_values(".env"))
+        result = subprocess.run(
+            ["doit", "-f", str(EXAMPLE_DIR / "dodo.py")],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        print(result.stdout)
+        if result.stderr:
+            print(result.stderr)
+        if result.returncode != 0:
+            raise RuntimeError(f"doit in example/ failed (exit {result.returncode})")
 
-#     return {
-#         "actions": [run_example_doit],
-#         "task_dep": ["example"],
-#         "verbosity": 2,
-#         "uptodate": [False],
-#     }
+        stamp.write_text("ran")
+
+    # Depend on all source files in the generated example
+    example_files = (
+        [str(p) for p in EXAMPLE_DIR.rglob("*") if p.is_file()]
+        if EXAMPLE_DIR.exists()
+        else []
+    )
+
+    return {
+        "actions": [run_example_doit],
+        "file_dep": example_files,
+        "task_dep": ["example"],
+        "targets": [str(stamp)],
+        "verbosity": 2,
+    }
