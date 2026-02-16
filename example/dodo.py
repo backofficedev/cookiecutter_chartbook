@@ -109,17 +109,6 @@ def task_pull():
         "file_dep": ["./src/settings.py", "./src/pull_ofr_api_data.py"],
         "clean": [],
     }
-    yield {
-        "name": "crsp_compustat",
-        "doc": "Pull CRSP Compustat data from WRDS",
-        "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_CRSP_Compustat.py",
-        ],
-        "targets": [DATA_DIR / "CRSP_Compustat.parquet"],
-        "file_dep": ["./src/settings.py", "./src/pull_CRSP_compustat.py"],
-        "clean": [],
-    }
 
 
 def task_summary_stats():
