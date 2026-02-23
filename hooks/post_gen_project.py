@@ -124,6 +124,16 @@ if not include_chartbook:
     # print("Removing Chartbook files...")
     remove_file("chartbook.toml")
     remove_dir("docs_src")
+    remove_dir(".claude/skills/chartbook")
+
+# Remove jupytext-notebook skill if notebooks not selected
+if not include_notebooks:
+    remove_dir(".claude/skills/jupytext-notebook")
+
+# Remove .claude directory entirely if nothing remains in it
+claude_dir = os.path.join(PROJECT_DIR, ".claude", "skills")
+if os.path.isdir(claude_dir) and not os.listdir(claude_dir):
+    remove_dir(".claude")
 
 # Remove GitHub Actions if not selected
 if not include_github_actions:

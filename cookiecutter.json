@@ -30,6 +30,7 @@
         "*.pdf",
         "*.tex",
         "*.bib",
-        ".github/workflows/*.yml"
+        ".github/workflows/*.yml",
+        ".claude/skills/*/*.md"
     ]
 }
