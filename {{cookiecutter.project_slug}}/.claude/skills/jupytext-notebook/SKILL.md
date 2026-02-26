@@ -1,11 +1,11 @@
 ---
 name: jupytext-notebook
-description: Write Python files in jupytext percent format for Jupyter notebook conversion. Use when creating or editing *_ipynb.py files, or when the user asks about notebook authoring, jupytext, or the percent format.
+description: Write Python files in jupytext percent format for Jupyter notebook conversion. Use when creating or editing *.ipynb.py files, or when the user asks about notebook authoring, jupytext, or the percent format.
 ---
 
 # Jupytext Percent Format Notebooks
 
-Notebooks are authored as `*_ipynb.py` files using [jupytext's percent format](https://jupytext.readthedocs.io/), then converted to `.ipynb` and executed by the build system. This keeps notebooks version-control friendly and diff-able.
+Notebooks are authored as `*.ipynb.py` files using [jupytext's percent format](https://jupytext.readthedocs.io/), then converted to `.ipynb` and executed by the build system. This keeps notebooks version-control friendly and diff-able.
 
 ## YAML Header
 
@@ -111,7 +111,7 @@ print(f"Chart saved to: {chart_path}")
 
 ## Conventions
 
-- **File naming**: Files MUST end with `_ipynb.py` (e.g., `01_analysis_ipynb.py`)
+- **File naming**: Files MUST end with `.ipynb.py` (e.g., `01_analysis.ipynb.py`)
 - **DataFrame display**: End code cells with a bare variable name to render output in Jupyter (e.g., `df` on the last line)
 - **Wide DataFrames**: Use `.glimpse()` for Polars DataFrames with many columns (vertical display)
 - **No sys.path manipulation**: Do NOT use `sys.path.insert()` or `__file__` — these are unavailable in converted notebooks. Rely on proper package installation and PYTHONPATH
@@ -146,16 +146,16 @@ Add entries to the `notebook_tasks` dictionary:
 
 ```python
 notebook_tasks = {
-    "01_data_sources_overview_ipynb": {
-        "path": "./src/01_data_sources_overview_ipynb.py",
+    "01_data_sources_overview.ipynb.py": {
+        "path": "./src/01_data_sources_overview.ipynb.py",
         "file_dep": [
             DATA_DIR / "ravenpack_djpr.parquet",
             DATA_DIR / "gdelt_sp500_headlines" / "year=2025" / "month=01" / "data.parquet",
         ],
         "targets": [],
     },
-    "02_gdelt_sp500_filtering_ipynb": {
-        "path": "./src/02_gdelt_sp500_filtering_ipynb.py",
+    "02_gdelt_sp500_filtering.ipynb.py": {
+        "path": "./src/02_gdelt_sp500_filtering.ipynb.py",
         "file_dep": [
             DATA_DIR / "gdelt_sp500_headlines" / "year=2025" / "month=01" / "data.parquet",
             DATA_DIR / "sp500_names_lookup.parquet",
@@ -166,7 +166,7 @@ notebook_tasks = {
 ```
 
 Each entry has:
-- **path**: Path to the `_ipynb.py` source file
+- **path**: Path to the `.ipynb.py` source file
 - **file_dep**: Python modules or data files the notebook depends on. The notebook re-runs when these change.
 - **targets**: Output files the notebook produces (plots, tables, etc.)
 
@@ -183,7 +183,8 @@ The `task_run_notebooks()` generator processes each notebook through:
 def task_run_notebooks():
     for notebook in notebook_tasks.keys():
         pyfile_path = Path(notebook_tasks[notebook]["path"])
-        notebook_path = pyfile_path.with_suffix(".ipynb")
+        notebook_path = pyfile_path.with_suffix("")  # strips .py, leaves .ipynb
+        notebook_name = notebook_path.stem  # e.g. "01_data_sources_overview"
         yield {
             "name": notebook,
             "actions": [
@@ -197,7 +198,7 @@ def task_run_notebooks():
                 *notebook_tasks[notebook]["file_dep"],
             ],
             "targets": [
-                OUTPUT_DIR / f"{notebook}.html",
+                OUTPUT_DIR / f"{notebook_name}.html",
                 *notebook_tasks[notebook]["targets"],
             ],
             "clean": True,
@@ -207,6 +208,6 @@ def task_run_notebooks():
 ### Running Notebooks
 
 ```bash
-doit run_notebooks                                    # Run all notebooks
-doit run_notebooks:01_data_sources_overview_ipynb      # Run a specific notebook
+doit run_notebooks                                           # Run all notebooks
+doit run_notebooks:01_data_sources_overview.ipynb.py          # Run a specific notebook
 ```

@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from cruft import create as cruft_create
+from cookiecutter.main import cookiecutter
 
 
 # Base context with all features disabled (uses pip by default)
@@ -55,8 +55,8 @@ FULL_CONTEXT = {
 
 
 def generate_project(template_dir, output_dir, context):
-    """Generate a project from the template using cruft."""
-    return cruft_create(
+    """Generate a project from the template using cookiecutter."""
+    return cookiecutter(
         str(template_dir),
         output_dir=str(output_dir),
         no_input=True,
@@ -122,9 +122,9 @@ def test_full_project_generation(template_dir, temp_dir):
     assert (project_dir / "src" / "pull_CRSP_Compustat.py").exists()
 
     # Notebooks should exist
-    assert (project_dir / "src" / "01_example_notebook_interactive_ipynb.py").exists()
-    assert (project_dir / "src" / "02_example_with_dependencies_ipynb.py").exists()
-    assert (project_dir / "src" / "03_public_repo_summary_charts_ipynb.py").exists()
+    assert (project_dir / "src" / "01_example_notebook_interactive.ipynb.py").exists()
+    assert (project_dir / "src" / "02_example_with_dependencies.ipynb.py").exists()
+    assert (project_dir / "src" / "03_public_repo_summary_charts.ipynb.py").exists()
 
     # R files should exist
     assert (project_dir / "src" / "example_r_plot.r").exists()
@@ -146,11 +146,11 @@ def test_notebooks_with_fred_only(template_dir, temp_dir):
     project_dir = Path(project_path)
 
     # Notebook 01 should exist (no dependencies)
-    assert (project_dir / "src" / "01_example_notebook_interactive_ipynb.py").exists()
+    assert (project_dir / "src" / "01_example_notebook_interactive.ipynb.py").exists()
     # Notebook 02 should exist (requires FRED)
-    assert (project_dir / "src" / "02_example_with_dependencies_ipynb.py").exists()
+    assert (project_dir / "src" / "02_example_with_dependencies.ipynb.py").exists()
     # Notebook 03 should NOT exist (requires FRED + OFR)
-    assert not (project_dir / "src" / "03_public_repo_summary_charts_ipynb.py").exists()
+    assert not (project_dir / "src" / "03_public_repo_summary_charts.ipynb.py").exists()
 
 
 def test_notebooks_with_fred_and_ofr(template_dir, temp_dir):
@@ -165,9 +165,9 @@ def test_notebooks_with_fred_and_ofr(template_dir, temp_dir):
     project_dir = Path(project_path)
 
     # All notebooks should exist
-    assert (project_dir / "src" / "01_example_notebook_interactive_ipynb.py").exists()
-    assert (project_dir / "src" / "02_example_with_dependencies_ipynb.py").exists()
-    assert (project_dir / "src" / "03_public_repo_summary_charts_ipynb.py").exists()
+    assert (project_dir / "src" / "01_example_notebook_interactive.ipynb.py").exists()
+    assert (project_dir / "src" / "02_example_with_dependencies.ipynb.py").exists()
+    assert (project_dir / "src" / "03_public_repo_summary_charts.ipynb.py").exists()
 
 
 def test_latex_only(template_dir, temp_dir):

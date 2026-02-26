@@ -1,6 +1,6 @@
 ---
 description:
-globs: *_ipynb.py
+globs: *.ipynb.py
 alwaysApply: false
 ---
 When you write a .py file with the intention of using jupytext to convert it to a .ipynb file, you should use the percent format. For information about jupytext, see here: https://jupytext.readthedocs.io/
@@ -168,8 +168,8 @@ Notebooks are integrated into the PyDoit build system via `dodo.py`. Here's how 
 1. **Notebook Registration**: Add your notebook to the `notebook_tasks` dictionary in [dodo.py](dodo.py):
    ```python
    notebook_tasks = {
-       "01_price_yield_validity_ipynb": {
-           "path": "./src/01_price_yield_validity_ipynb.py",
+       "01_price_yield_validity.ipynb.py": {
+           "path": "./src/01_price_yield_validity.ipynb.py",
            "file_dep": ["./src/load_collateral_price_yield.py"],
            "targets": [],
        },
@@ -190,8 +190,8 @@ Notebooks are integrated into the PyDoit build system via `dodo.py`. Here's how 
 
 4. **Example Task Configuration**:
    ```python
-   "02_inflation_analysis_ipynb": {
-       "path": "./src/02_inflation_analysis_ipynb.py",
+   "02_inflation_analysis.ipynb.py": {
+       "path": "./src/02_inflation_analysis.ipynb.py",
        "file_dep": ["./src/pull_fred.py"],
        "targets": [
            OUTPUT_DIR / "02_inflation_chart.html",
@@ -199,9 +199,9 @@ Notebooks are integrated into the PyDoit build system via `dodo.py`. Here's how 
    }
    ```
 
-5. **Naming Convention**: Notebook files MUST end with `_ipynb.py` to work with the build system and trigger this rule.
+5. **Naming Convention**: Notebook files MUST end with `.ipynb.py` to work with the build system and trigger this rule.
 
 6. **Running Notebooks**:
    - Run all notebooks: `doit run_notebooks`
-   - Run specific notebook: `doit run_notebooks:01_price_yield_validity_ipynb`
+   - Run specific notebook: `doit run_notebooks:01_price_yield_validity.ipynb.py`
    - View HTML output in `OUTPUT_DIR/*.html`

@@ -102,7 +102,7 @@ my_project/
 │   ├── settings.py         # Configuration management
 │   ├── misc_tools.py       # Utility functions
 │   ├── pull_*.py           # Data pull scripts (based on selections)
-│   ├── *_ipynb.py          # Notebook files (if selected)
+│   ├── *.ipynb.py          # Notebook files (if selected)
 │   └── ...
 ├── reports/                # LaTeX reports (if selected)
 ├── assets/                 # Static assets
