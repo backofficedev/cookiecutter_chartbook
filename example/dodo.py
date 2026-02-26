@@ -174,18 +174,18 @@ def task_chart_repo_rates():
 
 
 notebook_tasks = {
-    "01_example_notebook_interactive_ipynb": {
-        "path": "./src/01_example_notebook_interactive_ipynb.py",
+    "01_example_notebook_interactive.ipynb.py": {
+        "path": "./src/01_example_notebook_interactive.ipynb.py",
         "file_dep": [],
         "targets": [],
     },
-    "02_example_with_dependencies_ipynb": {
-        "path": "./src/02_example_with_dependencies_ipynb.py",
+    "02_example_with_dependencies.ipynb.py": {
+        "path": "./src/02_example_with_dependencies.ipynb.py",
         "file_dep": ["./src/pull_fred.py"],
         "targets": [OUTPUT_DIR / "GDP_graph.png"],
     },
-    "03_public_repo_summary_charts_ipynb": {
-        "path": "./src/03_public_repo_summary_charts_ipynb.py",
+    "03_public_repo_summary_charts.ipynb.py": {
+        "path": "./src/03_public_repo_summary_charts.ipynb.py",
         "file_dep": [
             "./src/pull_fred.py",
             "./src/pull_ofr_api_data.py",
@@ -206,7 +206,8 @@ def task_run_notebooks():
     """
     for notebook in notebook_tasks.keys():
         pyfile_path = Path(notebook_tasks[notebook]["path"])
-        notebook_path = pyfile_path.with_suffix(".ipynb")
+        notebook_path = pyfile_path.with_suffix("")  # strips .py, leaves .ipynb
+        notebook_name = notebook_path.stem  # e.g. "01_example_notebook_interactive"
         yield {
             "name": notebook,
             "actions": [
@@ -222,7 +223,7 @@ def task_run_notebooks():
                 *notebook_tasks[notebook]["file_dep"],
             ],
             "targets": [
-                OUTPUT_DIR / f"{notebook}.html",
+                OUTPUT_DIR / f"{notebook_name}.html",
                 *notebook_tasks[notebook]["targets"],
             ],
             "clean": True,
