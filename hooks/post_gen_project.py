@@ -96,15 +96,15 @@ if not include_latex:
 # Remove notebook files if not selected
 if not include_notebooks:
     # print("Removing Jupyter notebook files...")
-    remove_files_by_pattern("src", "*_ipynb.py")
+    remove_files_by_pattern("src", "*.ipynb.py")
 else:
     # Handle notebook dependencies
     # Notebook 02 requires FRED
     if not include_fred:
-        remove_file("src/02_example_with_dependencies_ipynb.py")
+        remove_file("src/02_example_with_dependencies.ipynb.py")
     # Notebook 03 requires FRED + OFR
     if not (include_fred and include_ofr):
-        remove_file("src/03_public_repo_summary_charts_ipynb.py")
+        remove_file("src/03_public_repo_summary_charts.ipynb.py")
 
 # Remove R-related files if not selected
 if not include_r:
