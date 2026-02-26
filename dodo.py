@@ -133,16 +133,9 @@ def task_run_example():
 
         stamp.write_text("ran")
 
-    # Depend on all source files in the generated example
-    example_files = (
-        [str(p) for p in EXAMPLE_DIR.rglob("*") if p.is_file()]
-        if EXAMPLE_DIR.exists()
-        else []
-    )
-
     return {
         "actions": [run_example_doit],
-        "file_dep": example_files,
+        "file_dep": [str(OUTPUT_DIR / "example.stamp")],
         "task_dep": ["example"],
         "targets": [str(stamp)],
         "verbosity": 2,
