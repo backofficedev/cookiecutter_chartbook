@@ -114,6 +114,13 @@ def test_full_project_generation(template_dir, temp_dir):
     assert (project_dir / "r_requirements.txt").exists()
     assert (project_dir / ".latexmkrc").exists()
 
+    # Site pages should exist
+    assert (project_dir / "docs_src" / "index_toc.md").exists()
+    assert (project_dir / "docs_src" / "project_overview.md").exists()
+    assert (project_dir / "docs_src" / "project_overview" / "goals.md").exists()
+    assert (project_dir / "docs_src" / "project_overview" / "data_sources.md").exists()
+    assert (project_dir / "docs_src" / "project_overview" / "methodology.md").exists()
+
     # Data pull scripts should exist
     assert (project_dir / "src" / "pull_fred.py").exists()
     assert (project_dir / "src" / "pull_ofr_api_data.py").exists()
