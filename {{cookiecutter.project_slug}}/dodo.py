@@ -80,7 +80,7 @@ def copy_file(origin_path, destination_path, mkdir=True):
 def task_config():
     """Create empty directories for data and output if they don't exist"""
     return {
-        "actions": ["ipython ./src/settings.py"],
+        "actions": ["python ./src/settings.py"],
         "targets": [DATA_DIR, OUTPUT_DIR],
         "file_dep": ["./src/settings.py"],
         "clean": [],
@@ -96,8 +96,8 @@ def task_pull():
         "name": "fred",
         "doc": "Pull data from FRED",
         "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_fred.py",
+            "python ./src/settings.py",
+            "python ./src/pull_fred.py",
         ],
         "targets": [DATA_DIR / "fred.parquet"],
         "file_dep": ["./src/settings.py", "./src/pull_fred.py"],
@@ -109,8 +109,8 @@ def task_pull():
         "name": "ofr",
         "doc": "Pull data from OFR API",
         "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_ofr_api_data.py",
+            "python ./src/settings.py",
+            "python ./src/pull_ofr_api_data.py",
         ],
         "targets": [DATA_DIR / "ofr_public_repo_data.parquet"],
         "file_dep": ["./src/settings.py", "./src/pull_ofr_api_data.py"],
@@ -122,8 +122,8 @@ def task_pull():
         "name": "bloomberg",
         "doc": "Pull data from Bloomberg",
         "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_bloomberg.py",
+            "python ./src/settings.py",
+            "python ./src/pull_bloomberg.py",
         ],
         "targets": [DATA_DIR / "bloomberg.parquet"],
         "file_dep": ["./src/settings.py", "./src/pull_bloomberg.py"],
@@ -135,8 +135,8 @@ def task_pull():
         "name": "crsp_stock",
         "doc": "Pull CRSP stock data from WRDS",
         "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_CRSP_stock.py",
+            "python ./src/settings.py",
+            "python ./src/pull_CRSP_stock.py",
         ],
         "targets": [DATA_DIR / "CRSP_monthly_stock.parquet"],
         "file_dep": ["./src/settings.py", "./src/pull_CRSP_stock.py"],
@@ -148,8 +148,8 @@ def task_pull():
         "name": "crsp_compustat",
         "doc": "Pull CRSP Compustat data from WRDS",
         "actions": [
-            "ipython ./src/settings.py",
-            "ipython ./src/pull_CRSP_Compustat.py",
+            "python ./src/settings.py",
+            "python ./src/pull_CRSP_Compustat.py",
         ],
         "targets": [DATA_DIR / "CRSP_Compustat.parquet"],
         "file_dep": ["./src/settings.py", "./src/pull_CRSP_compustat.py"],
@@ -171,8 +171,8 @@ def task_summary_stats():
 
     return {
         "actions": [
-            "ipython ./src/example_table.py",
-            "ipython ./src/pandas_to_latex_demo.py",
+            "python ./src/example_table.py",
+            "python ./src/pandas_to_latex_demo.py",
         ],
         "targets": targets,
         "file_dep": file_dep,
@@ -190,7 +190,7 @@ def task_example_plot():
 
     return {
         "actions": [
-            "ipython ./src/example_plot.py",
+            "python ./src/example_plot.py",
         ],
         "targets": targets,
         "file_dep": file_dep,
@@ -218,7 +218,7 @@ def task_chart_repo_rates():
 
     return {
         "actions": [
-            "ipython ./src/chart_relative_repo_rates.py",
+            "python ./src/chart_relative_repo_rates.py",
         ],
         "targets": targets,
         "file_dep": file_dep,
