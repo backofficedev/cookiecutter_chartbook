@@ -41,7 +41,7 @@ notebook
 {% endif %}
 {% if cookiecutter.include_chartbook or cookiecutter.include_jupyter_notebooks %}
 # Documentation/notebook rendering dependencies
-chartbook[all]
+chartbook[all]>=0.0.14
 {% endif %}
 {% if cookiecutter.include_crsp_stock or cookiecutter.include_crsp_compustat %}
 # WRDS data access
