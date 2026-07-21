@@ -26,15 +26,10 @@ chartbook catalog init --title "My Catalog"  # Non-interactive
 Creates `~/.chartbook/chartbook.toml` with a minimal skeleton:
 
 ```toml
-[config]
+[project]
 type = "catalog"
-
-[site]
-title = "My Catalog"
-author = ""
-copyright = "2026"
-logo_path = ""
-favicon_path = ""
+name = "My Catalog"
+maintainer = ""
 
 [pipelines]
 ```
@@ -75,21 +70,77 @@ chartbook catalog add ./my-pipeline --catalog /path/to/catalog/chartbook.toml
 ```
 
 **Behavior:**
-- Validates each directory contains a `chartbook.toml` with `type = "pipeline"`
-- Extracts pipeline name from `pipeline.pipeline_name` field
-- Generates sanitized TOML keys from directory names (lowercase, underscores)
-- Stores relative paths from the catalog directory
+- Validates each directory contains a `chartbook.toml` that resolves to a pipeline (an empty file counts — type is inferred)
+- Derives the scoped catalog key (`scope/name`) from an explicit `[project] id` if set, else from the target's git remote plus directory name, falling back to the bare directory name
+- Writes the key quoted in TOML when it contains `/`: `[pipelines."ftsfr/crsp_treasury"]`
+- Stores relative paths from the catalog directory in the entry's `path` key
 - Detects duplicates by absolute path comparison
 - Re-adding a disabled pipeline automatically re-enables it
+
+Resulting entries look like:
+
+```toml
+[pipelines."ftsfr/crsp_treasury"]
+path = "../crsp_treasury"
+
+[pipelines."ftsfr/fed_yield_curve"]
+path = "../fed_yield_curve"
+disabled = true
+
+# Platform-specific paths
+[pipelines."finm/news_headlines"]
+path = { unix = "/data/pipelines/news_headlines", windows = "T:/pipelines/news_headlines" }
+```
+
+### Auto-Discovery with `members` (local catalogs)
+
+Instead of explicit entries, a catalog's `[pipelines]` table can declare membership as path patterns — new pipelines dropped into a matched directory join automatically:
+
+```toml
+[pipelines]
+members = [
+    "../GitRepositories/ftsfr_repos/*",
+    "../GitRepositories/finm33200/news_headlines",
+]
+disabled = ["ftsfr/sovereign_bonds"]    # switch member pipelines off by ID
+exclude = ["../GitRepositories/ftsfr_repos/scratch_*"]   # optional
+```
+
+Rules:
+- Patterns resolve relative to the catalog directory; matched directories with a pipeline `chartbook.toml` join under their **derived** scoped ID.
+- Glob matches skip non-pipeline directories and catalogs silently (the catalog never discovers itself); a *literal* member path that is missing/broken is a hard error.
+- v1-format members and duplicate derived IDs are hard errors with "To fix" suggestions.
+- Explicit entries coexist with `members`; one pointing at the same directory a pattern matched wins (rename mechanism).
+- `members`, `exclude`, `disabled` are reserved keys — not usable as bare pipeline IDs.
+- `catalog add` on a covered path reports "already covered by pipelines.members pattern" instead of adding an entry.
+
+Auto-discovery targets the **local** catalog; publishing to shared catalogs should stay explicit.
 
 ### Disable / Enable Pipelines
 
 ```bash
-chartbook catalog disable PIPELINE_ID [--catalog PATH]
-chartbook catalog enable PIPELINE_ID [--catalog PATH]
+chartbook catalog disable ftsfr/crsp_treasury [--catalog PATH]
+chartbook catalog enable ftsfr/crsp_treasury [--catalog PATH]
 ```
 
-Sets or clears `disabled = true` on a pipeline entry. Disabled pipelines remain in the TOML file but are skipped during builds and excluded from queries.
+For explicit entries, sets or clears `disabled = true` on the entry; for member-discovered pipelines, maintains the `pipelines.disabled` ID list. Disabled pipelines remain in the TOML file but are skipped during builds and excluded from queries.
+
+### Catalog Policy (Required Fields)
+
+The `chartbook.toml` format itself makes nearly all fields optional; a catalog can impose requiredness on its member pipelines via a `[policy]` section in the catalog's `chartbook.toml`:
+
+```toml
+[policy]
+mode = "warn"          # "warn" (default): report on the diagnostics page
+                       # "strict": fail the catalog build on missing fields
+
+[policy.required]
+project    = ["description", "maintainer", "repo_url"]
+dataframes = ["date_col", "pull_method"]
+charts     = ["units", "frequency"]
+```
+
+Without a `[policy]` section, a default warn-only list of recommended fields is reported on the diagnostics page. Policy is enforced only during catalog builds — standalone pipeline builds are always permissive.
 
 ### Build Catalog Documentation
 
@@ -121,22 +172,22 @@ chartbook ls --catalog /path/to/catalog/chartbook.toml
 ```
 Catalog: /path/to/catalog/chartbook.toml
 
-[pipeline] SALES: Sales Analytics Pipeline
-  [dataframe] SALES/sales_data: Sales Transactions
-  [chart] SALES/monthly_sales: Monthly Sales Overview
+[pipeline] acme/sales: Sales Analytics Pipeline
+  [dataframe] acme/sales/sales_data: Sales Transactions
+  [chart] acme/sales/monthly_sales: Monthly Sales Overview
 ```
 
 ### Access Dataframe Metadata
 
 ```bash
-# Get path to a dataframe's parquet file
-chartbook data get-path --pipeline SALES --dataframe sales_data
+# Get path to a dataframe's parquet file (bare pipeline name)
+chartbook data get-path --pipeline sales --dataframe sales_data
 
-# Print documentation content for a dataframe
-chartbook data get-docs --pipeline SALES --dataframe sales_data
+# Print documentation content for a dataframe (scoped pipeline name)
+chartbook data get-docs --pipeline acme/sales --dataframe sales_data
 
 # Get path to documentation source file
-chartbook data get-docs-path --pipeline SALES --dataframe sales_data
+chartbook data get-docs-path --pipeline sales --dataframe sales_data
 ```
 
 All `chartbook data` commands accept an optional `--catalog PATH` flag.
@@ -146,28 +197,41 @@ All `chartbook data` commands accept an optional `--catalog PATH` flag.
 ```python
 from chartbook import data
 
-# Load a dataframe (returns Polars LazyFrame by default)
-lf = data.load(pipeline="SALES", dataframe="sales_data")
+# Load a dataframe (returns Polars LazyFrame by default) — bare pipeline name
+lf = data.load(pipeline="sales", dataframe="sales_data")
+
+# Scoped pipeline name (canonical form; required when a bare name is ambiguous)
+lf = data.load(pipeline="acme/sales", dataframe="sales_data")
 
 # Load as Polars eager DataFrame
-df = data.load(pipeline="SALES", dataframe="sales_data", format="polars_eager")
+df = data.load(pipeline="sales", dataframe="sales_data", format="polars_eager")
 
 # Load as pandas DataFrame
-df = data.load(pipeline="SALES", dataframe="sales_data", format="pandas")
+df = data.load(pipeline="sales", dataframe="sales_data", format="pandas")
 
 # Load with explicit catalog path
-lf = data.load(pipeline="SALES", dataframe="sales_data",
+lf = data.load(pipeline="sales", dataframe="sales_data",
                catalog_path="/path/to/catalog/chartbook.toml")
 
 # Get data file path
-path = data.get_data_path(pipeline="SALES", dataframe="sales_data")
+path = data.get_data_path(pipeline="sales", dataframe="sales_data")
 
 # Get documentation content as a string
-docs = data.get_docs(pipeline="SALES", dataframe="sales_data")
+docs = data.get_docs(pipeline="sales", dataframe="sales_data")
 
 # Get path to documentation source file
-docs_path = data.get_docs_path(pipeline="SALES", dataframe="sales_data")
+docs_path = data.get_docs_path(pipeline="sales", dataframe="sales_data")
 ```
+
+### Pipeline Reference Resolution
+
+The `pipeline` argument (and `--pipeline` CLI flag) accepts three forms:
+
+1. **Bare name** (`crsp_treasury`) — matches any catalog entry whose name component equals it; errors listing candidates if ambiguous
+2. **Scoped name** (`ftsfr/crsp_treasury`) — matches its catalog key exactly
+3. **Repo URL** (`https://github.com/ftsfr/crsp_treasury`) — normalized to a scoped name
+
+An `@rev` suffix (e.g. `ftsfr/crsp_treasury@a1b2c3d`) is reserved for future version pinning and is rejected with a "not yet supported" error.
 
 ### Format Options
 
@@ -179,7 +243,7 @@ docs_path = data.get_docs_path(pipeline="SALES", dataframe="sales_data")
 
 ### Hive-Partitioned Data Loading
 
-When `path_to_parquet_data` uses a glob pattern (e.g., `**/*.parquet`), Polars `scan_parquet` automatically detects hive directory structure and adds partition columns to the LazyFrame. Only `format="polars"` supports glob patterns.
+When a dataframe's `path` uses a glob pattern (e.g., `**/*.parquet`), Polars `scan_parquet` automatically detects hive directory structure and adds partition columns to the LazyFrame. Only `format="polars"` supports glob patterns.
 
 ### Catalog Path Resolution in Python
 
@@ -192,8 +256,8 @@ Same priority as CLI:
 ### Documentation Retrieval
 
 `get_docs()` and `get_docs_path()` handle both documentation modes transparently:
-- **`dataframe_docs_path`**: Reads the external `.md` file; `get_docs_path()` returns the file path
-- **`dataframe_docs_str`**: Returns the inline string directly; `get_docs_path()` returns the `chartbook.toml` path
+- **`docs_path`**: Reads the external `.md` file; `get_docs_path()` returns the file path
+- **`docs`** (inline string): Returns the string directly; `get_docs_path()` returns the `chartbook.toml` path
 
 ## Environment & Path Utilities (`chartbook.env`)
 
@@ -224,7 +288,7 @@ os_type = chartbook.env.get_os_type()
 ## Scaffolding New Projects
 
 ```bash
-chartbook init   # Wraps cruft create — requires pip install "chartbook[all]"
+chartbook init   # Wraps cruft create (cruft ships with chartbook)
 ```
 
 Creates a new pipeline project from the cookiecutter template. Projects can later pull upstream template updates via `cruft update`.
