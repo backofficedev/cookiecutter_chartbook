@@ -41,7 +41,7 @@ notebook
 
 
 # Documentation/notebook rendering dependencies
-chartbook>=0.0.14
+chartbook>=0.1.0
 
 
 
