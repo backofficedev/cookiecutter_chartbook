@@ -61,7 +61,7 @@ dependencies:
   - pip
   - pip:
 {% if cookiecutter.include_chartbook or cookiecutter.include_jupyter_notebooks %}
-      - chartbook[all]
+      - chartbook>=0.1.0
 {% endif %}
 {% if cookiecutter.include_crsp_stock or cookiecutter.include_crsp_compustat %}
       - wrds==3.*
