@@ -23,6 +23,7 @@ This template allows you to generate a customized data science project with:
 
 - **Data Source Integration**:
   - FRED (Federal Reserve Economic Data)
+  - Federal Reserve yield curve (Gürkaynak, Sack, and Wright)
   - OFR API (Office of Financial Research)
   - Bloomberg (requires terminal access)
   - CRSP Stock data (requires WRDS)
@@ -131,7 +132,7 @@ doit
 doit list
 
 # Run specific task
-doit pull_fred
+doit pull:fred
 ```
 
 ## Development
@@ -173,11 +174,16 @@ ruff format . && ruff check --select I --fix . && ruff check --fix .
 
 ```bash
 # Install test dependencies
-pip install pytest cruft
+pip install cruft pytest doit colorama python-decouple
 
 # Run tests
 pytest tests/ -v
 ```
+
+The integration tests run the generated example scripts and compile the LaTeX
+reports. Each one is skipped when what it needs (pandas, matplotlib and seaborn,
+or `latexmk` and `pdflatex`) is not installed. To leave them out, run
+`pytest tests/ -m "not integration"`.
 
 ### Testing Different Configurations
 
@@ -219,7 +225,7 @@ doit list
 
 ## Example Project
 
-The `example/` directory contains a full example of a generated project with all features enabled. This serves as a reference implementation.
+The `example/` directory contains a generated project, kept in the repository as a reference. `doit example` regenerates it with the options set in the root `dodo.py`: LaTeX reports, Jupyter notebooks, Chartbook, GitHub Actions, and the public data sources (FRED, the Fed yield curve, and the OFR API).
 
 ## License
 

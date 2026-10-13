@@ -69,6 +69,24 @@
 
 \usepackage{dcolumn}
 
+%% Generated tables and figures
+% \inputifexists{file} and \includegraphicsifexists[options]{file} work like
+% \input and \includegraphics, except that they typeset a placeholder when the
+% file does not exist. Use them for files that the pipeline generates, so that
+% the document still compiles in your editor before you have run `doit`.
+\newcommand{\missingfileplaceholder}[1]{%
+  \edef\missingfilepath{#1}%
+  % latexmk reads a log line worded like this as a missing dependency, and so
+  % recompiles the document once the file exists.
+  \typeout{No file \missingfilepath.}%
+  \fbox{\parbox{0.8\linewidth}{\centering\small
+    Missing \texttt{\detokenize\expandafter{\missingfilepath}}\\
+    Run \texttt{doit} to generate it.}}}
+\newcommand{\inputifexists}[1]{%
+  \IfFileExists{#1}{\input{#1}}{\missingfileplaceholder{#1}}}
+\newcommand{\includegraphicsifexists}[2][]{%
+  \IfFileExists{#2}{\includegraphics[#1]{#2}}{\missingfileplaceholder{#2}}}
+
 %% Force LaTeX image to appear in the section in which it's declared [duplicate]
 % https://tex.stackexchange.com/questions/32598/force-latex-image-to-appear-in-the-section-in-which-its-declared
 \usepackage[section]{placeins}

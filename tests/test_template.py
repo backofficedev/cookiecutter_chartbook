@@ -5,6 +5,8 @@ different combinations of options.
 """
 
 import os
+import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -95,6 +97,12 @@ def test_minimal_project_generation(template_dir, temp_dir):
     assert not (project_dir / "src" / "pull_ofr_api_data.py").exists()
     assert not (project_dir / "src" / "pull_bloomberg.py").exists()
 
+    # example_plot.py only belongs with FRED or the LaTeX reports
+    assert not (project_dir / "src" / "example_plot.py").exists()
+
+    # Only the R and Stata examples need directories defined in .env
+    assert "DATA_DIR" not in (project_dir / ".env.example").read_text()
+
 
 def test_full_project_generation(template_dir, temp_dir):
     """Test generating a full project with all optional features enabled."""
@@ -159,6 +167,8 @@ def test_notebooks_with_fred_only(template_dir, temp_dir):
     assert (project_dir / "src" / "02_example_with_dependencies.ipynb.py").exists()
     # Notebook 03 should NOT exist (requires FRED + OFR)
     assert not (project_dir / "src" / "03_public_repo_summary_charts.ipynb.py").exists()
+    # example_plot.py should exist (it plots FRED data)
+    assert (project_dir / "src" / "example_plot.py").exists()
 
 
 def test_notebooks_with_fred_and_ofr(template_dir, temp_dir):
@@ -190,7 +200,140 @@ def test_latex_only(template_dir, temp_dir):
     assert (project_dir / "reports").exists()
     assert (project_dir / ".latexmkrc").exists()
     assert (project_dir / "src" / "example_table.py").exists()
+    assert (project_dir / "src" / "example_plot.py").exists()
     assert (project_dir / "src" / "pandas_to_latex_demo.py").exists()
+
+
+def test_latex_reports_avoid_eps_graphics(template_dir, temp_dir):
+    """Test that the reports don't include EPS figures.
+
+    pdfLaTeX, the default engine in most editors, can only use EPS by converting
+    it on the fly. Default (restricted shell escape) settings refuse to write the
+    converted file outside the document's directory, so the build fails.
+    """
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_latex_reports": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    for tex_file in (project_dir / "reports").glob("*.tex"):
+        graphics = re.findall(
+            r"\\includegraphics(?:ifexists)?(?:\[[^\]]*\])?\{([^}]+)\}",
+            tex_file.read_text(),
+        )
+        eps_graphics = [g for g in graphics if g.lower().endswith(".eps")]
+        assert not eps_graphics, f"{tex_file.name} includes EPS: {eps_graphics}"
+
+    assert (project_dir / "assets" / "star_network_n_nodes.pdf").exists()
+
+
+def test_latex_reports_guard_generated_outputs(template_dir, temp_dir):
+    """Test that reports only include pipeline outputs after checking they exist.
+
+    A plain \\input or \\includegraphics of a file in _output is a fatal error
+    until doit has been run, which is what a new user hits on their first build.
+    """
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_latex_reports": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    for tex_file in (project_dir / "reports").glob("*.tex"):
+        text = tex_file.read_text()
+        checked = set(re.findall(r"\\IfFileExists\{([^}]+)\}", text))
+        included = re.findall(
+            r"\\(?:input|includegraphics(?:\[[^\]]*\])?)"
+            r"\{((?:\\PathToOutput|\.\./_output)/[^}]+)\}",
+            text,
+        )
+        unchecked = [path for path in included if path not in checked]
+        assert not unchecked, f"{tex_file.name} includes unchecked outputs: {unchecked}"
+
+    # doit, unlike an editor, must still build the outputs before compiling
+    dodo = (project_dir / "dodo.py").read_text()
+    for output in ["example_plot.png", "example_table.tex", "pandas_to_latex_simple_table1.tex"]:
+        assert f'OUTPUT_DIR / "{output}",' in dodo
+
+
+@pytest.mark.integration
+def test_latex_reports_compile_before_outputs_exist(template_dir, temp_dir):
+    """Integration test: compile the reports with pdfLaTeX on a brand-new project.
+
+    This is what an editor's build button does before doit has been run.
+    """
+    if shutil.which("latexmk") is None or shutil.which("pdflatex") is None:
+        pytest.skip("requires latexmk and pdflatex")
+
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_latex_reports": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    reports_dir = Path(project_path) / "reports"
+
+    for name in ["report_example", "slides_example", "report_simple_example"]:
+        result = subprocess.run(
+            ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", f"{name}.tex"],
+            cwd=reports_dir,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"{name} failed to compile:\n{result.stdout[-3000:]}"
+        assert (reports_dir / f"{name}.pdf").exists()
+
+
+def test_latex_without_fred_has_no_fred_dependency(template_dir, temp_dir):
+    """Test that the LaTeX example inputs don't need FRED when it isn't selected.
+
+    The .tex files are copied without rendering, so they always include
+    example_plot.png and example_table.tex. Both must be buildable without
+    pull_fred.py, which is removed when FRED is not selected.
+    """
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_latex_reports": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    assert not (project_dir / "src" / "pull_fred.py").exists()
+    for script in ["example_plot.py", "example_table.py"]:
+        assert "import pull_fred" not in (project_dir / "src" / script).read_text()
+
+    dodo = (project_dir / "dodo.py").read_text()
+    assert "def task_example_plot" in dodo
+    assert "pull_fred" not in dodo
+
+
+@pytest.mark.integration
+def test_latex_examples_run_without_fred(template_dir, temp_dir):
+    """Integration test: build the LaTeX example inputs with FRED not selected."""
+    for package in ["decouple", "matplotlib", "numpy", "pandas", "seaborn"]:
+        pytest.importorskip(package)
+
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_latex_reports": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    result = subprocess.run(
+        ["doit", "config", "summary_stats", "example_plot"],
+        cwd=project_dir,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"doit failed: {result.stderr}\n{result.stdout}"
+    output_dir = project_dir / "_output"
+    assert (output_dir / "example_plot.png").exists()
+    assert (output_dir / "example_table.tex").exists()
+    assert (output_dir / "pandas_to_latex_simple_table1.tex").exists()
 
 
 def test_r_only(template_dir, temp_dir):
@@ -209,6 +352,10 @@ def test_r_only(template_dir, temp_dir):
     assert (project_dir / "src" / "04_example_regressions.Rmd").exists()
     # Conda projects should have environment.yml
     assert (project_dir / "environment.yml").exists()
+    # The R examples read these directories from .env
+    env_example = (project_dir / ".env.example").read_text()
+    assert "DATA_DIR=_data" in env_example
+    assert "OUTPUT_DIR=_output" in env_example
 
 
 def test_stata_only(template_dir, temp_dir):
@@ -221,6 +368,38 @@ def test_stata_only(template_dir, temp_dir):
     project_dir = Path(project_path)
 
     assert (project_dir / "src" / "example_stata_plot.do").exists()
+    # The Stata example reads these directories from .env
+    env_example = (project_dir / ".env.example").read_text()
+    assert "DATA_DIR=_data" in env_example
+    assert "OUTPUT_DIR=_output" in env_example
+
+
+def test_r_without_fred_has_no_fred_dependency(template_dir, temp_dir):
+    """Test that the R examples don't read FRED data when FRED isn't selected."""
+    context = {
+        **MINIMAL_CONTEXT,
+        "environment_manager": "conda",  # R requires conda or pixi
+        "include_r_scripts": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    for script in ["example_r_plot.r", "04_example_regressions.Rmd"]:
+        assert "fred.parquet" not in (project_dir / "src" / script).read_text()
+    assert "pull_fred" not in (project_dir / "dodo.py").read_text()
+
+
+def test_stata_without_fred_has_no_fred_dependency(template_dir, temp_dir):
+    """Test that the Stata example doesn't read FRED data when FRED isn't selected."""
+    context = {
+        **MINIMAL_CONTEXT,
+        "include_stata_scripts": True,
+    }
+    project_path = generate_project(template_dir, temp_dir, context)
+    project_dir = Path(project_path)
+
+    assert "fred.csv" not in (project_dir / "src" / "example_stata_plot.do").read_text()
+    assert "pull_fred" not in (project_dir / "dodo.py").read_text()
 
 
 def test_wrds_sources(template_dir, temp_dir):
@@ -256,6 +435,22 @@ def test_dodo_py_syntax(template_dir, temp_dir):
         py_compile.compile(str(dodo_path), doraise=True)
     except py_compile.PyCompileError as e:
         pytest.fail(f"dodo.py has invalid Python syntax: {e}")
+
+
+def test_dodo_src_references_match_filenames(template_dir, temp_dir):
+    """Test that every src file named in dodo.py exists with that exact case.
+
+    Compares against the directory listing rather than using exists(), so a
+    case mismatch is caught on case-insensitive filesystems too.
+    """
+    project_path = generate_project(template_dir, temp_dir, FULL_CONTEXT)
+    project_dir = Path(project_path)
+
+    src_files = set(os.listdir(project_dir / "src"))
+    referenced = set(re.findall(r"\./src/([\w.]+)", (project_dir / "dodo.py").read_text()))
+
+    assert referenced, "expected dodo.py to reference files in ./src"
+    assert referenced <= src_files, f"not found in src/: {sorted(referenced - src_files)}"
 
 
 def test_doit_list_command(template_dir, temp_dir):
@@ -311,6 +506,25 @@ def test_doit_list_with_fred(template_dir, temp_dir):
     )
 
     assert result.returncode == 0, f"doit list failed: {result.stderr}"
+
+
+def test_doit_task_dependencies_resolve(template_dir, temp_dir):
+    """Test that every task_dep in the full project names a task that exists.
+
+    'doit list' doesn't check task_dep, but running any task does, so run the
+    lightweight config task.
+    """
+    project_path = generate_project(template_dir, temp_dir, FULL_CONTEXT)
+    project_dir = Path(project_path)
+
+    result = subprocess.run(
+        ["doit", "config"],
+        cwd=project_dir,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"doit config failed: {result.stderr}"
 
 
 def test_readme_contains_project_name(template_dir, temp_dir):

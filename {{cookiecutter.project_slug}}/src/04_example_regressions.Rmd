@@ -4,6 +4,11 @@ output: html_notebook
 ---
 
 This is an example of an R notebook used in this PyDoit workflow.
+{%- if not cookiecutter.include_fred %}
+
+FRED was not selected when this project was generated, so the series used below
+are simulated stand-ins rather than real data.
+{%- endif %}
 
 ```{r}
 # install.packages("arrow")
@@ -24,9 +29,24 @@ library(stargazer)
 
 
 ```{r}
+{% if cookiecutter.include_fred -%}
 # Load data from FRED
 data <- read_parquet("../_data/fred.parquet")
-
+{% else -%}
+# FRED was not selected for this project, so simulate quarterly levels to stand
+# in for the series that pull_fred.py would otherwise provide.
+set.seed(100)
+dates <- seq(as.Date("1947-01-01"), as.Date("2023-10-01"), by = "quarter")
+simulate_level <- function() {
+  100 * exp(cumsum(rnorm(length(dates), mean = 0.008, sd = 0.01)))
+}
+data <- tibble(
+  DATE = dates,
+  CPIAUCNS = simulate_level(),
+  GDP = simulate_level(),
+  GDPC1 = simulate_level()
+)
+{% endif %}
 # Ensure data is sorted by DATE
 data <- data %>% arrange(DATE)
 

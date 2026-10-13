@@ -152,7 +152,7 @@ def task_pull():
             "python ./src/pull_CRSP_Compustat.py",
         ],
         "targets": [DATA_DIR / "CRSP_Compustat.parquet"],
-        "file_dep": ["./src/settings.py", "./src/pull_CRSP_compustat.py"],
+        "file_dep": ["./src/settings.py", "./src/pull_CRSP_Compustat.py"],
         "clean": [],
     }
 {%- endif %}
@@ -179,12 +179,16 @@ def task_summary_stats():
         "clean": True,
     }
 {%- endif %}
-{%- if cookiecutter.include_fred %}
+{%- if cookiecutter.include_fred or cookiecutter.include_latex_reports %}
 
 
 def task_example_plot():
     """Example plots"""
+{%- if cookiecutter.include_fred %}
     file_dep = [Path("./src") / file for file in ["example_plot.py", "pull_fred.py"]]
+{%- else %}
+    file_dep = [Path("./src") / file for file in ["example_plot.py"]]
+{%- endif %}
     file_output = ["example_plot.png"]
     targets = [OUTPUT_DIR / file for file in file_output]
 
@@ -306,8 +310,11 @@ def task_compile_latex_docs():
         "./reports/my_common_header.sty",
         "./reports/report_simple_example.tex",
         "./reports/slides_simple_example.tex",
-        "./src/example_plot.py",
-        "./src/example_table.py",
+        # Generated inputs. The reports typeset a placeholder for a missing one
+        # instead of failing, so list them here to have doit build them first.
+        OUTPUT_DIR / "example_plot.png",
+        OUTPUT_DIR / "example_table.tex",
+        OUTPUT_DIR / "pandas_to_latex_simple_table1.tex",
     ]
     targets = [
         "./reports/report_example.pdf",
@@ -376,13 +383,13 @@ def task_install_r_packages():
     """Install R packages"""
     file_dep = [
         "r_requirements.txt",
-        "./src/install_packages.R",
+        "./src/install_packages.r",
     ]
     targets = [OUTPUT_DIR / "R_packages_installed.txt"]
 
     return {
         "actions": [
-            "Rscript ./src/install_packages.R",
+            "Rscript ./src/install_packages.r",
         ],
         "targets": targets,
         "file_dep": file_dep,
@@ -396,7 +403,7 @@ def task_example_r_script():
 {%- if cookiecutter.include_fred %}
         "./src/pull_fred.py",
 {%- endif %}
-        "./src/example_r_plot.R"
+        "./src/example_r_plot.r"
     ]
     targets = [
         OUTPUT_DIR / "example_r_plot.png",
@@ -404,12 +411,12 @@ def task_example_r_script():
 
     return {
         "actions": [
-            "Rscript ./src/example_r_plot.R",
+            "Rscript ./src/example_r_plot.r",
         ],
         "targets": targets,
         "file_dep": file_dep,
 {%- if cookiecutter.include_fred %}
-        "task_dep": ["pull_fred"],
+        "task_dep": ["pull:fred"],
 {%- endif %}
         "clean": True,
     }
@@ -496,7 +503,7 @@ def task_example_stata_script():
         "targets": targets,
         "file_dep": file_dep,
 {%- if cookiecutter.include_fred %}
-        "task_dep": ["pull_fred"],
+        "task_dep": ["pull:fred"],
 {%- endif %}
         "clean": True,
         "verbosity": 2,

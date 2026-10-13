@@ -147,6 +147,10 @@ if not include_fred:
     remove_file("src/pull_fred.py")
     remove_file("src/test_pull_fred.py")
 
+# example_plot.py demonstrates FRED data and feeds the LaTeX reports
+if not (include_fred or include_latex):
+    remove_file("src/example_plot.py")
+
 if not include_fed_yield_curve:
     remove_file("src/load_fed_yield_curve.py")
 
