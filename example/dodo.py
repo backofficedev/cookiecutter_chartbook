@@ -245,8 +245,11 @@ def task_compile_latex_docs():
         "./reports/my_common_header.sty",
         "./reports/report_simple_example.tex",
         "./reports/slides_simple_example.tex",
-        "./src/example_plot.py",
-        "./src/example_table.py",
+        # Generated inputs. The reports typeset a placeholder for a missing one
+        # instead of failing, so list them here to have doit build them first.
+        OUTPUT_DIR / "example_plot.png",
+        OUTPUT_DIR / "example_table.tex",
+        OUTPUT_DIR / "pandas_to_latex_simple_table1.tex",
     ]
     targets = [
         "./reports/report_example.pdf",
