@@ -4,10 +4,7 @@ description = "Example project generated from cookiecutter-chartbook"
 maintainer = "Author Name"
 contributors = ["Author Name"]
 os_compatibility = ["Windows", "Linux", "macOS"]
-build = """
-module load anaconda3/3.11.4 TeXLive/2023
-doit
-"""
+requires_chartbook = ">=0.4.0"
 
 [notebooks]
 
@@ -72,3 +69,5 @@ path = "./_output/repo_rates.html"
 excel_path = "./src/repo_rates.xlsx"
 docs_path = "./docs_src/charts/repo_rates.md"
 
+[scripts]
+build = "doit"

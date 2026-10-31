@@ -295,7 +295,7 @@ def task_build_chartbook_site():
 
     return {
         "actions": [
-            "chartbook build -f",
+            "chartbook docs build -f",
         ],  # Use docs as build destination
         "targets": sphinx_targets,
         "file_dep": file_dep,

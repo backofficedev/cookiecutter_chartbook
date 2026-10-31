@@ -4,10 +4,10 @@ description = "{{ cookiecutter.project_description }}"
 maintainer = "{{ cookiecutter.author_name }}"
 contributors = ["{{ cookiecutter.author_name }}"]
 os_compatibility = ["Windows", "Linux", "macOS"]
-build = """
-module load anaconda3/3.11.4 TeXLive/2023
-doit
-"""
+requires_chartbook = ">=0.4.0"
+
+[scripts]
+build = "doit"
 
 [notebooks]
 {% if cookiecutter.include_jupyter_notebooks %}
